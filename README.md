@@ -48,12 +48,7 @@ A professional water treatment monitoring interface for the Arduino GIGA R1 with
 3. Click **Zero Calibration** to zero the current reading
 4. The displayed value will now show relative to the zero point
 
-### Customizing Home Screen
-1. Navigate to **Config** tab
-2. Click **Display Settings**
-3. Click **Edit Home Screen Layout**
-4. Use the **-** buttons to remove tiles or the **+** button to add them back
-5. Click **Apply Changes** to save
+
 
 ## Project Structure
 
@@ -76,9 +71,6 @@ SCM_Cursor_v2_patched/
 
 This interface is designed to replicate the functionality and user experience of the **MicroMetrix Model SCD-W610** Streaming Current Detector and Controller, adapted for the Arduino GIGA platform.
 
-## License
-
-This project is provided as-is for educational and prototyping purposes.
 
 ## Author
 
