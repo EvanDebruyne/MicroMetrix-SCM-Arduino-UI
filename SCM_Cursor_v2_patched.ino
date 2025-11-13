@@ -15,6 +15,26 @@
 GigaDisplay_GFX gfx;
 Arduino_GigaDisplayTouch Touch;
 
+// --------------- Hardware Configuration -----------------
+// Set to true to use real hardware inputs, false for mock data
+#define USE_REAL_HARDWARE false
+
+// Analog input pins for 4-20mA signals
+// Note: For 4-20mA, you typically need a 250Ω resistor (or 165Ω for 3.3V max)
+// to convert current to voltage: 4mA = 1V, 20mA = 5V (or 3.3V max with 165Ω)
+#define PIN_4_20MA_CH1 A0   // Streaming Current or Particle Counter
+#define PIN_4_20MA_CH2 A1   // Flow sensor
+#define PIN_4_20MA_CH3 A2   // pH sensor
+#define PIN_4_20MA_CH4 A3   // Temperature sensor
+
+// 4-20mA scaling configuration
+// For 250Ω resistor: 4mA = 1V, 20mA = 5V
+// Arduino GIGA has 3.3V reference, so use 165Ω for full range: 4mA = 0.66V, 20mA = 3.3V
+// Or use voltage divider if using 250Ω resistor
+#define CURRENT_TO_VOLTAGE_RESISTOR 165.0f  // Ohms (165Ω for 3.3V max, 250Ω for 5V with divider)
+#define ADC_RESOLUTION 4095.0f  // 12-bit ADC on GIGA R1
+#define ADC_REFERENCE_VOLTAGE 3.3f  // Volts
+
 // --------------- Data model (demo) -----------------
 enum InputChannelIndex : uint8_t {
   CHANNEL_STREAMING_CURRENT = 0,
@@ -1835,8 +1855,55 @@ static void build_ui() {
   show_page(page_home);
 }
 
+// ------------------- Hardware Input Functions ------------------
+static float read_4_20ma_signal(uint8_t pin) {
+  // Read analog value (0-4095 for 12-bit ADC)
+  int raw_adc = analogRead(pin);
+  
+  // Convert to voltage
+  float voltage = (raw_adc / ADC_RESOLUTION) * ADC_REFERENCE_VOLTAGE;
+  
+  // Convert voltage to current (4-20mA range)
+  // Voltage = Current * Resistance
+  float current_ma = (voltage / CURRENT_TO_VOLTAGE_RESISTOR) * 1000.0f; // Convert to mA
+  
+  // Clamp to valid 4-20mA range
+  if (current_ma < 4.0f) current_ma = 4.0f;
+  if (current_ma > 20.0f) current_ma = 20.0f;
+  
+  return current_ma;
+}
+
+static float scale_4_20ma_to_units(float current_ma, float min_units, float max_units) {
+  // Linear scaling: 4mA = min_units, 20mA = max_units
+  // Formula: units = min + (current - 4) / (20 - 4) * (max - min)
+  float scaled = min_units + ((current_ma - 4.0f) / 16.0f) * (max_units - min_units);
+  return scaled;
+}
+
+static float read_hardware_channel(uint8_t pin, float min_units, float max_units) {
+  float current_ma = read_4_20ma_signal(pin);
+  return scale_4_20ma_to_units(current_ma, min_units, max_units);
+}
+
 // ------------------- Timer update ------------------
 static void ui_update_cb(lv_timer_t* t) {
+#if USE_REAL_HARDWARE
+  // Read from actual hardware inputs
+  InputChannel& sc = input_channels[CHANNEL_STREAMING_CURRENT];
+  // For particle counter or streaming current: scale 4-20mA to 0-1000 particles/mL or -500 to 500 mV
+  // Adjust min/max based on your sensor's actual range
+  sc.value = read_hardware_channel(PIN_4_20MA_CH1, sc.minValue, sc.maxValue);
+
+  InputChannel& flow = input_channels[CHANNEL_FLOW];
+  flow.value = read_hardware_channel(PIN_4_20MA_CH2, flow.minValue, flow.maxValue);
+
+  InputChannel& ph = input_channels[CHANNEL_PH];
+  ph.value = read_hardware_channel(PIN_4_20MA_CH3, ph.minValue, ph.maxValue);
+
+  InputChannel& temp = input_channels[CHANNEL_TEMPERATURE];
+  temp.value = read_hardware_channel(PIN_4_20MA_CH4, temp.minValue, temp.maxValue);
+#else
   // Realistic fake dynamics for demo
   InputChannel& sc = input_channels[CHANNEL_STREAMING_CURRENT];
   sc.value = 5.0f + (random(-20, 21)) * 0.1f; // 5.0 ± 2.0 mV range
@@ -1855,6 +1922,7 @@ static void ui_update_cb(lv_timer_t* t) {
   temp.value += (random(-3, 4)) * 0.02f;
   if (temp.value < 20.0f) temp.value = 20.0f;
   if (temp.value > 25.0f) temp.value = 25.0f;
+#endif
 
   // Update alarm state mock logic
   bool any_alarm = false;
@@ -1927,6 +1995,21 @@ static void ui_update_cb(lv_timer_t* t) {
 // ------------------- Arduino setup/loop ------------
 void setup() {
   Serial.begin(115200);
+  
+#if USE_REAL_HARDWARE
+  // Initialize analog input pins for 4-20mA signals
+  pinMode(PIN_4_20MA_CH1, INPUT);
+  pinMode(PIN_4_20MA_CH2, INPUT);
+  pinMode(PIN_4_20MA_CH3, INPUT);
+  pinMode(PIN_4_20MA_CH4, INPUT);
+  
+  // Set analog reference (GIGA R1 uses 3.3V by default)
+  analogReadResolution(12); // 12-bit resolution (0-4095)
+  
+  Serial.println("Hardware mode: Reading 4-20mA signals from analog inputs");
+#else
+  Serial.println("Demo mode: Using simulated sensor data");
+#endif
   
   // Initialize display
   gfx.begin();
