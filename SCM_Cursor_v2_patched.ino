@@ -885,7 +885,10 @@ static void build_home_content(lv_obj_t* page) {
   lv_obj_set_flex_flow(page, LV_FLEX_FLOW_COLUMN);
   lv_obj_set_style_pad_all(page, 20, 0);
   lv_obj_set_style_pad_row(page, 20, 0);
-  lv_obj_clear_flag(page, LV_OBJ_FLAG_SCROLLABLE);
+  // Enable vertical scrolling for home page
+  lv_obj_add_flag(page, LV_OBJ_FLAG_SCROLLABLE);
+  lv_obj_set_scroll_dir(page, LV_DIR_VER);
+  lv_obj_set_scrollbar_mode(page, LV_SCROLLBAR_MODE_AUTO);
 
   // Alarm banner region
   home_banner_container = lv_obj_create(page);
@@ -900,9 +903,9 @@ static void build_home_content(lv_obj_t* page) {
   lv_obj_set_style_text_color(home_banner_label, lv_color_hex(0xFFFFFF), 0);
   lv_obj_center(home_banner_label);
 
-  // Create a main container that takes up the full available space
+  // Create a main container that can expand beyond viewport for scrolling
   lv_obj_t* main_container = lv_obj_create(page);
-  lv_obj_set_size(main_container, LV_PCT(100), LV_PCT(100));
+  lv_obj_set_size(main_container, LV_PCT(100), LV_SIZE_CONTENT);
   lv_obj_set_flex_flow(main_container, LV_FLEX_FLOW_COLUMN);
   lv_obj_set_style_pad_all(main_container, 20, 0);
   lv_obj_set_style_pad_row(main_container, 20, 0);
@@ -1245,12 +1248,12 @@ static void build_graphs_content(lv_obj_t* page) {
   lv_obj_set_style_bg_opa(chart_wrapper, LV_OPA_TRANSP, 0);
   lv_obj_set_style_border_width(chart_wrapper, 0, 0);
   lv_obj_set_style_pad_all(chart_wrapper, 0, 0);
-  lv_obj_set_style_pad_column(chart_wrapper, 12, 0);
+  lv_obj_set_style_pad_column(chart_wrapper, 6, 0);
   lv_obj_set_flex_flow(chart_wrapper, LV_FLEX_FLOW_ROW);
   lv_obj_clear_flag(chart_wrapper, LV_OBJ_FLAG_SCROLLABLE);
 
   graphs_y_label_container = lv_obj_create(chart_wrapper);
-  lv_obj_set_size(graphs_y_label_container, 80, LV_PCT(100));
+  lv_obj_set_size(graphs_y_label_container, 50, LV_PCT(100));
   lv_obj_set_style_bg_opa(graphs_y_label_container, LV_OPA_TRANSP, 0);
   lv_obj_set_style_border_width(graphs_y_label_container, 0, 0);
   lv_obj_set_style_pad_all(graphs_y_label_container, 0, 0);
@@ -1276,7 +1279,8 @@ static void build_graphs_content(lv_obj_t* page) {
   lv_obj_set_style_bg_grad_dir(graphs_chart, LV_GRAD_DIR_VER, 0);
   lv_obj_set_style_border_width(graphs_chart, 1, 0);
   lv_obj_set_style_border_color(graphs_chart, lv_color_hex(0x1E293B), 0);
-  lv_obj_set_style_pad_all(graphs_chart, 12, 0);
+  lv_obj_set_style_pad_all(graphs_chart, 8, 0);
+  lv_obj_set_style_pad_right(graphs_chart, 4, 0);
 
   lv_chart_set_axis_tick(
     graphs_chart,
