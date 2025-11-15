@@ -107,11 +107,11 @@ static InputChannel input_channels[INPUT_CHANNEL_COUNT] = {
     "Streaming Current",
     "mV",
     1,
-    5.0f,
-    -500.0f,
-    500.0f,
-    3.8f,
-    6.0f,
+    0.0f,
+    -3.0f,
+    3.0f,
+    -1.0f,
+    1.0f,
     true,
     true,
     false,
@@ -709,10 +709,10 @@ static void populate_graphs_chart(uint8_t channel_index) {
   bool custom_axis = false;
 
   if (!strcmp(channel.id, "sc")) {
-    axis_min = 0.0f;
-    axis_max = 25.0f;
-    tick_count = 6;
-    tick_step = 5.0f;
+    axis_min = -3.0f;
+    axis_max = 3.0f;
+    tick_count = 7;
+    tick_step = 1.0f;
     custom_axis = true;
   } else if (!strcmp(channel.id, "flow")) {
     axis_min = 0.0f;
@@ -1910,7 +1910,9 @@ static void ui_update_cb(lv_timer_t* t) {
 #else
   // Realistic fake dynamics for demo
   InputChannel& sc = input_channels[CHANNEL_STREAMING_CURRENT];
-  sc.value = 5.0f + (random(-20, 21)) * 0.1f; // 5.0 ± 2.0 mV range
+  // Streaming current typically centers around zero (optimal coagulant dosage)
+  // Small fluctuations indicate charge neutralization is occurring
+  sc.value = 0.0f + (random(-30, 31)) * 0.05f; // 0.0 ± 1.5 mV range, centered at zero
 
   InputChannel& flow = input_channels[CHANNEL_FLOW];
   flow.value += (random(-5, 6)) * 0.1f;
