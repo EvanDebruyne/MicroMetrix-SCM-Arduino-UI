@@ -364,7 +364,7 @@ static void on_add_channel(lv_event_t* e) {
   channel->editVisible = true;
 
   // Close the popup that triggered this event, if any
-  lv_obj_t* btn = lv_event_get_target(e);
+  lv_obj_t* btn = static_cast<lv_obj_t*>(lv_event_get_target(e));
   if (btn) {
     lv_obj_t* popup = lv_obj_get_parent(btn);
     if (popup && lv_obj_is_valid(popup)) {
@@ -377,7 +377,7 @@ static void on_add_channel(lv_event_t* e) {
 
 static void on_close_popup(lv_event_t* e) {
   // Find and close the popup
-  lv_obj_t* btn = lv_event_get_target(e);
+  lv_obj_t* btn = static_cast<lv_obj_t*>(lv_event_get_target(e));
   if (!btn) return;
   
   lv_obj_t* popup = lv_obj_get_parent(btn);
@@ -439,7 +439,7 @@ static void on_zero_calibration(lv_event_t* e) {
   
   channel->calibrationOffset = channel->value;
   
-  lv_obj_t* btn = lv_event_get_target(e);
+  lv_obj_t* btn = static_cast<lv_obj_t*>(lv_event_get_target(e));
   if (btn) {
     lv_obj_t* popup = lv_obj_get_parent(btn);
     while (popup && lv_obj_get_parent(popup) != content) {
@@ -479,7 +479,7 @@ static void on_output_setpoint_changed(lv_event_t* e) {
   ptrdiff_t index = channel - output_channels;
   if (index < 0 || index >= OUTPUT_CHANNEL_COUNT) return;
 
-  lv_obj_t* slider = lv_event_get_target(e);
+  lv_obj_t* slider = static_cast<lv_obj_t*>(lv_event_get_target(e));
   if (!slider || !lv_obj_is_valid(slider)) return;
 
   int32_t slider_value = lv_slider_get_value(slider);
@@ -758,7 +758,8 @@ static void populate_graphs_chart(uint8_t channel_index) {
   int32_t scaled_max = static_cast<int32_t>(ceilf(axis_max * TREND_SCALE));
 
   lv_chart_set_range(graphs_chart, LV_CHART_AXIS_PRIMARY_Y, scaled_min, scaled_max);
-  lv_chart_set_axis_tick(graphs_chart, LV_CHART_AXIS_PRIMARY_Y, 8, 4, tick_count, 0, true, 50);
+  // Note: lv_chart_set_axis_tick may not be available in all LVGL versions
+  // Chart tick styling is handled via manual tick labels
 
   float step = (tick_count > 1) ? tick_step : 0.0f;
   float value = axis_max;
@@ -793,7 +794,8 @@ static void populate_graphs_chart(uint8_t channel_index) {
       lv_chart_set_value_by_id(graphs_chart, graphs_series, i, chart_value);
     }
 
-    lv_chart_set_axis_tick(graphs_chart, LV_CHART_AXIS_PRIMARY_X, 0, 0, 0, 0, false, 0);
+    // Note: lv_chart_set_axis_tick may not be available in all LVGL versions
+    // X-axis ticks are handled by default chart styling
     lv_chart_refresh(graphs_chart);
     return;
   }
@@ -817,7 +819,8 @@ static void populate_graphs_chart(uint8_t channel_index) {
     lv_chart_set_value_by_id(graphs_chart, graphs_series, i, chart_value);
   }
 
-  lv_chart_set_axis_tick(graphs_chart, LV_CHART_AXIS_PRIMARY_X, 0, 0, 0, 0, false, 0);
+  // Note: lv_chart_set_axis_tick may not be available in all LVGL versions
+  // X-axis ticks are handled by default chart styling
 
   lv_chart_refresh(graphs_chart);
 }
@@ -1282,30 +1285,13 @@ static void build_graphs_content(lv_obj_t* page) {
   lv_obj_set_style_pad_all(graphs_chart, 8, 0);
   lv_obj_set_style_pad_right(graphs_chart, 4, 0);
 
-  lv_chart_set_axis_tick(
-    graphs_chart,
-    LV_CHART_AXIS_PRIMARY_Y,
-    8,
-    4,
-    5,
-    2,
-    true,
-    50
-  );
+  // Note: lv_chart_set_axis_tick may not be available in all LVGL versions
+  // Chart axis styling is handled through general chart styling
+  // Tick labels are manually created in the Y-axis label container
 
-  lv_chart_set_axis_tick(
-    graphs_chart,
-    LV_CHART_AXIS_PRIMARY_X,
-    10,
-    4,
-    6,
-    1,
-    true,
-    40
-  );
-
-  lv_obj_set_style_text_font(graphs_chart, LV_FONT_DEFAULT, LV_PART_TICKS);
-  lv_obj_set_style_text_color(graphs_chart, lv_color_hex(0xCBD5F5), LV_PART_TICKS);
+  // Set chart text styling (using LV_PART_MAIN as fallback if LV_PART_TICKS not available)
+  lv_obj_set_style_text_font(graphs_chart, LV_FONT_DEFAULT, LV_PART_MAIN);
+  lv_obj_set_style_text_color(graphs_chart, lv_color_hex(0xCBD5F5), LV_PART_MAIN);
 
   lv_obj_set_style_line_color(graphs_chart, lv_color_hex(0x1F2937), LV_PART_MAIN | LV_STATE_DEFAULT);
   lv_obj_set_style_line_opa(graphs_chart, LV_OPA_50, LV_PART_MAIN | LV_STATE_DEFAULT);
