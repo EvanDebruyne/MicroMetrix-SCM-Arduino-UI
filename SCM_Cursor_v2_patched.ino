@@ -282,7 +282,7 @@ static void on_splash_timer(lv_timer_t* t) {
   
   // Now build the main UI
   build_ui();
-  ui_tick = lv_timer_create(ui_update_cb, 500, nullptr);
+  ui_tick = lv_timer_create(ui_update_cb, 4000, nullptr);
 }
 
 static void create_splash_screen() {
@@ -2028,7 +2028,7 @@ void setup() {
   create_splash_screen();
   
   // Set up update timer
-  lv_timer_create(ui_update_cb, 1000, nullptr);
+  lv_timer_create(ui_update_cb, 4000, nullptr);
 }
 
 void loop() {
